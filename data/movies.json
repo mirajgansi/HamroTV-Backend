@@ -1,0 +1,27 @@
+[
+    {
+      "id": 1,
+      "title": "American Psycho",
+      "youtube_link": "https://youtu.be/RjKNbfA64EE?si=NaDvEdi5Tzt6kzQI"
+    },
+    {
+      "id": 2,
+      "title": "Batman",
+      "youtube_link": "https://youtu.be/mqqft2x_Aa4?si=VB3WDvtX2IvHZ_YG"
+    },
+    {
+      "id": 3,
+      "title": "Avatar",
+      "youtube_link": "https://youtu.be/d9MyW72ELq0?si=xArN5IMoYbDqk0FT"
+    },
+    {
+      "id": 4,
+      "title": "Pulp Fiction",
+      "youtube_link": "https://youtu.be/5ZAhzsi1ybM?si=nLtn6JC8ZpfNrdbx"
+    },
+    {
+      "id": 5,
+      "title": "The Good",
+      "youtube_link": "https://youtu.be/WCN5JJY_wiA?si=NMyCZIom6-AK4jzv"
+    }
+  ]
