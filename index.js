@@ -1,28 +1,33 @@
-const express=require('express');
-const cors=require('cors');
-const bodyParser=require('body-parser');
-const sequelize=require('./database/db');
-const testRoute =require('./route/testRoute')
 
-const app=express();
+//Initialization
+const express = require('express');
+const cors = require('cors');
+const bodyParser = require('body-parser');
+const sequelize = require('./database/db');
+const userRoute = require('./routes/userRoute')
 
-const PORT=process.env.PORT || 4000;
+//Creating a Server
+const app = express();
 
-app.use(cors())
-app.use(bodyParser.json())
-app.use(bodyParser.urlencoded({extended:true}))
+//Creating a port
+const PORT = process.env.PORT || 5000
 
-app.get('/',(req,res)=>{
-    res.send("WELCOME TO THE PAGE")
+//Creating a middleware
+app.use(cors());
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({extended: true}));
+
+
+app.get('/login',(req, res)=>{
+    res.send("Welcome to the web page")
 })
 
-app.get('/notice',(req,res)=>{
-    res.send("Thi is notice")
-})
 
-app.get('./test',testRoute);
+app.use('/users', userRoute);
 
-//running on PORT
-app.listen(PORT,()=>{
-    console.log(`server Running on ...................PORT ${PORT}`)
-})
+
+//Running on PORT
+// Running on PORT
+app.listen(PORT, () => {
+    console.log(`Server running on: http://localhost:${PORT}`);
+});
