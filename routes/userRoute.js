@@ -1,13 +1,14 @@
-const express = require('express')
-
+const express = require('express');
 const router = express.Router();
-
-const userController = require('../controller/userController'); // Ensure path is correct
+const userController = require('../controller/userController'); // Ensure correct path
 const authMiddleware = require('../middleware/authMiddleware');
 
+// Public routes (no authentication required)
+router.post('/register', userController.registerUser);
+router.post('/login', userController.loginUser);
 
-// Protected routes (require valid JWT)
-router.get('/', authMiddleware, userController.getUser);
+
+router.get('/', authMiddleware, userController.getUserByUsername);
 router.put('/:id', authMiddleware, userController.updateUser);
 router.delete('/:id', authMiddleware, userController.deleteUser);
 

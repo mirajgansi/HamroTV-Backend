@@ -2,25 +2,60 @@ const User = require('../model/User');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 
+// const registerUser = async (req, res) => {
+//     const { username, password_hash } = req.body; // Renamed to 'password' for clarity
+//     if (!username || !password_hash) {
+//         return res.status(400).json({ error: "Please provide username and password" });
+//     }
+//     try {
+//         const checkExistingUser = await User.findOne({ where: { username } });
+//         if (checkExistingUser) {
+//             return res.status(400).json({ error: "Username already exists" });
+//         }
+//         const saltRounds = 10;
+//         const hashPassword = await bcrypt.hash(password_hash, saltRounds);
+//         await User.create({ username, password_hash: hashPassword });
+//         res.status(201).json({ message: "Registration successful." });
+//     } catch (error) {
+        
+//         console.error(error);
+//         res.status(500).json({ error: "Internal server error" });
+//     }
+// };
+
 const registerUser = async (req, res) => {
-    const { username, password } = req.body; // Renamed to 'password' for clarity
-    if (!username || !password) {
-        return res.status(400).json({ error: "Please provide username and password" });
-    }
     try {
-        const checkExistingUser = await User.findOne({ where: { username } });
-        if (checkExistingUser) {
-            return res.status(400).json({ error: "Username already exists" });
+        const { username, email, password_hash } = req.body;
+
+        // Check if user exists
+        const existingUser = await User.findOne({ where: { username } });
+        if (existingUser) {
+            return res.status(400).json({ error: 'Username already exists' });
         }
-        const saltRounds = 10;
-        const hashPassword = await bcrypt.hash(password, saltRounds);
-        await User.create({ username, password_hash: hashPassword });
-        res.status(201).json({ message: "Registration successful." });
+
+        const existingEmail = await User.findOne({ where: { email } });
+        if (existingEmail) {
+            return res.status(400).json({ error: 'Email already exists' });
+        }
+
+        // Create new user
+        const newUser = await User.create({
+            username,
+            email,
+            password_hash
+        });
+
+        res.status(201).json({
+            status: 'User created successfully',
+            data: newUser
+        });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Internal server error" });
+        console.error('Error creating user:', error);
+        res.status(500).json({ error: 'Failed to create user', details: error.message });
     }
 };
+
+
 
 const loginUser = async (req, res) => {
     const { username, password } = req.body; // Correctly destructured
@@ -48,24 +83,30 @@ const loginUser = async (req, res) => {
     }
 };
 
-const getUser = async (req, res) => {
+const getUserByUsername = async (req, res) => {
     try {
-        const users = await User.findAll({ attributes: { exclude: ['password_hash'] } }); // Exclude sensitive data
-        res.status(200).json(users);
+        const { username } = req.params; // Get username from the request parameters
+        const user = await User.findOne({ where: { username } }); // Find user by username
+
+        if (!user) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        return res.status(200).json(user); // Return the user data
     } catch (error) {
         console.error(error);
-        res.status(500).json({ error: "Failed to retrieve users" });
+        res.status(500).json({ error: "Failed to retrieve user" });
     }
 };
 
 const createUser = async (req, res) => {
-    const { username, password } = req.body;
-    if (!username || !password) {
+    const { username, password_hash } = req.body;
+    if (!username || !password_hash) {
         return res.status(400).json({ error: "Please provide username and password" });
     }
     try {
         const saltRounds = 10;
-        const hashPassword = await bcrypt.hash(password, saltRounds);
+        const hashPassword = await bcrypt.hash(password_hash, saltRounds);
         const newUser = await User.create({ username, password_hash: hashPassword });
         res.status(201).json(newUser);
     } catch (error) {
@@ -75,16 +116,23 @@ const createUser = async (req, res) => {
 };
 
 const updateUser = async (req, res) => {
+    const { id } = req.params;
+    const { username, email, password } = req.body; // Assuming you're updating these fields
+
     try {
-        const user = await User.findByPk(req.params.id);
+        const user = await User.findByPk(id);
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
-        // Optionally handle password updates with hashing
-        await user.update(req.body);
+
+        user.username = username || user.username;
+        user.email = email || user.email;
+        user.password_hash = password || user.password_hash;
+
+        await user.save();
         res.json(user);
-    } catch (err) {
-        res.status(400).json({ error: err.message });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
     }
 };
 
@@ -101,4 +149,4 @@ const deleteUser = async (req, res) => {
     }
 };
 
-module.exports = { registerUser, loginUser, getUser, createUser, updateUser, deleteUser };
+module.exports = { registerUser, loginUser,getUserByUsername,createUser,updateUser,deleteUser};
