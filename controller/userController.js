@@ -50,7 +50,7 @@ const registerUser = async (req, res) => {
             data: newUser
         });
     } catch (error) {
-        console.error('Error creating user:', error);
+        console.log(error)
         res.status(500).json({ error: 'Failed to create user', details: error.message });
     }
 };
@@ -85,35 +85,19 @@ const loginUser = async (req, res) => {
 
 const getUserByUsername = async (req, res) => {
     try {
-        const { username } = req.params; // Get username from the request parameters
-        const user = await User.findOne({ where: { username } }); // Find user by username
+        const username = req.params.username;
+        const user = await User.findOne({ where: { username } });
 
         if (!user) {
-            return res.status(404).json({ error: "User not found" });
+            return res.status(404).json({ message: 'User not found' });
         }
 
-        return res.status(200).json(user); // Return the user data
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Failed to retrieve user" });
+        return res.status(200).json(user);
+    } catch (err) {
+        return res.status(500).json({ error: err.message });
     }
 };
 
-const createUser = async (req, res) => {
-    const { username, password_hash } = req.body;
-    if (!username || !password_hash) {
-        return res.status(400).json({ error: "Please provide username and password" });
-    }
-    try {
-        const saltRounds = 10;
-        const hashPassword = await bcrypt.hash(password_hash, saltRounds);
-        const newUser = await User.create({ username, password_hash: hashPassword });
-        res.status(201).json(newUser);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Failed to create user" });
-    }
-};
 
 const updateUser = async (req, res) => {
     const { id } = req.params;
@@ -149,4 +133,4 @@ const deleteUser = async (req, res) => {
     }
 };
 
-module.exports = { registerUser, loginUser,getUserByUsername,createUser,updateUser,deleteUser};
+module.exports = { registerUser, loginUser, getUserByUsername,updateUser, deleteUser };
