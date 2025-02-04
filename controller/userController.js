@@ -58,21 +58,21 @@ const registerUser = async (req, res) => {
 
 
 const loginUser = async (req, res) => {
-    const { username, password } = req.body; // Correctly destructured
-    if (!username || !password) {
-        return res.status(400).json({ error: "Please provide username and password" });
+    const { email, password } = req.body; // Correctly destructured
+    if (!email || !password) {
+        return res.status(400).json({ error: "Please provide email and password" });
     }
     try {
-        const user = await User.findOne({ where: { username } });
+        const user = await User.findOne({ where: { email } });
         if (!user) {
             return res.status(401).json({ error: "Invalid credentials" });
         }
-        const isMatch = await bcrypt.compare(password, user.password_hash); // Correct field
+        const isMatch = await bcrypt.compare(password, user.password_hash); // Correct field comparison
         if (!isMatch) {
             return res.status(401).json({ error: "Invalid credentials" });
         }
         const token = jwt.sign(
-            { id: user.id, username: user.username }, // Use user.id as the identifier
+            { id: user.id, email: user.email }, // Use user.id as the identifier
             process.env.JWT_SECRET || 'fallback_secret',
             { expiresIn: '24h' }
         );
@@ -82,6 +82,7 @@ const loginUser = async (req, res) => {
         res.status(500).json({ error: "Internal server error" });
     }
 };
+
 
 const getUserByUsername = async (req, res) => {
     try {

@@ -16,15 +16,8 @@ app.use(cors({
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Routes
-app.get('/login', (req, res) => {
-    res.send("Welcome to the web page");
-});
-
-
-
 app.use('/users', userRoute);
-app.use('/movie', movieRoute);
+app.use('/movie', movieRoute);  
 
 // Test database connection and start server
 testConnection().then(() => {
