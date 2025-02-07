@@ -17,7 +17,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use('/users', userRoute);
-app.use('/movie', movieRoute);  
+app.use('/movies', movieRoute);  
 
 // Test database connection and start server
 testConnection().then(() => {

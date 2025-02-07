@@ -8,6 +8,8 @@ router.post('/', movieController.addMovie);
 // Get all movies
 router.get('/', movieController.getAllMovies);
 
+router.get('/movies', movieController.getAllMovies);
+
 // Get a single movie by ID
 router.get('/:id', movieController.getMovieById);
 
