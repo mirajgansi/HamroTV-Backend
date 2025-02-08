@@ -16,6 +16,11 @@ app.use(cors({
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+app.get('/login',(req, res)=>{
+    res.send("Welcome to the web page")
+})
+
+
 app.use('/users', userRoute);
 app.use('/movies', movieRoute);  
 

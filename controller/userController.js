@@ -2,27 +2,6 @@ const User = require('../model/User');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 
-// const registerUser = async (req, res) => {
-//     const { username, password_hash } = req.body; // Renamed to 'password' for clarity
-//     if (!username || !password_hash) {
-//         return res.status(400).json({ error: "Please provide username and password" });
-//     }
-//     try {
-//         const checkExistingUser = await User.findOne({ where: { username } });
-//         if (checkExistingUser) {
-//             return res.status(400).json({ error: "Username already exists" });
-//         }
-//         const saltRounds = 10;
-//         const hashPassword = await bcrypt.hash(password_hash, saltRounds);
-//         await User.create({ username, password_hash: hashPassword });
-//         res.status(201).json({ message: "Registration successful." });
-//     } catch (error) {
-        
-//         console.error(error);
-//         res.status(500).json({ error: "Internal server error" });
-//     }
-// };
-
 const registerUser = async (req, res) => {
     try {
         const { username, email, password_hash } = req.body;
@@ -38,28 +17,34 @@ const registerUser = async (req, res) => {
             return res.status(400).json({ error: 'Email already exists' });
         }
 
+        // Hash the password
+        const saltRounds = 10;
+        const hashedPassword = await bcrypt.hash(password_hash, saltRounds);
+
         // Create new user
         const newUser = await User.create({
             username,
             email,
-            password_hash
+            password_hash: hashedPassword
         });
 
         res.status(201).json({
             status: 'User created successfully',
-            data: newUser
+            data: {
+                id: newUser.id,
+                username: newUser.username,
+                email: newUser.email
+            }
         });
     } catch (error) {
-        console.log(error)
+        console.log(error);
         res.status(500).json({ error: 'Failed to create user', details: error.message });
     }
 };
 
-
-
 const loginUser = async (req, res) => {
-    const { email, password } = req.body; // Correctly destructured
-    if (!email || !password) {
+    const { email, password_hash } = req.body;
+    if (!email || !password_hash) {
         return res.status(400).json({ error: "Please provide email and password" });
     }
     try {
@@ -67,22 +52,21 @@ const loginUser = async (req, res) => {
         if (!user) {
             return res.status(401).json({ error: "Invalid credentials" });
         }
-        const isMatch = await bcrypt.compare(password, user.password_hash); // Correct field comparison
+        const isMatch = await bcrypt.compare(password_hash, user.password_hash);
         if (!isMatch) {
             return res.status(401).json({ error: "Invalid credentials" });
         }
         const token = jwt.sign(
-            { id: user.id, email: user.email }, // Use user.id as the identifier
+            { id: user.id, email: user.email },
             process.env.JWT_SECRET || 'fallback_secret',
             { expiresIn: '24h' }
         );
         res.status(200).json({ message: "Successfully logged in", token });
     } catch (error) {
-        console.error(error);
+        console.error("Login error:", error.message);
         res.status(500).json({ error: "Internal server error" });
     }
 };
-
 
 const getUserByUsername = async (req, res) => {
     try {
@@ -93,16 +77,24 @@ const getUserByUsername = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        return res.status(200).json(user);
+        // Exclude password_hash from the response
+        const userData = {
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt
+        };
+
+        return res.status(200).json(userData);
     } catch (err) {
         return res.status(500).json({ error: err.message });
     }
 };
 
-
 const updateUser = async (req, res) => {
     const { id } = req.params;
-    const { username, email, password } = req.body; // Assuming you're updating these fields
+    const { username, email, password } = req.body;
 
     try {
         const user = await User.findByPk(id);
@@ -112,10 +104,19 @@ const updateUser = async (req, res) => {
 
         user.username = username || user.username;
         user.email = email || user.email;
-        user.password_hash = password || user.password_hash;
+
+        // Hash the new password if provided
+        if (password) {
+            const saltRounds = 10;
+            user.password_hash = await bcrypt.hash(password, saltRounds);
+        }
 
         await user.save();
-        res.json(user);
+        res.json({
+            id: user.id,
+            username: user.username,
+            email: user.email
+        });
     } catch (error) {
         res.status(500).json({ message: 'Server error' });
     }
@@ -134,4 +135,4 @@ const deleteUser = async (req, res) => {
     }
 };
 
-module.exports = { registerUser, loginUser, getUserByUsername,updateUser, deleteUser };
+module.exports = { registerUser, loginUser, getUserByUsername, updateUser, deleteUser };
