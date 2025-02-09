@@ -10,9 +10,9 @@ const Movie = sequelize.define("Movie", {
     genre: { type: DataTypes.STRING, allowNull: false },
     director: { type: DataTypes.STRING, allowNull: false },
     rating: { type: DataTypes.FLOAT, allowNull: true },
-}, {
-    timestamps: false,
-    tableName: "movies"
+    thumbnailupload:{  type: DataTypes.STRING,allowNull: true,
+}, 
+    
 });
 
 module.exports = Movie;
