@@ -7,11 +7,11 @@ const movieController = require('../controller/movieController'); // Import cont
 router.post('/', upload.single('thumbnailUpload'), movieController.addMovie);
 
 // Get all movies
-router.get('/',upload.single('thumbnailUpload'), movieController.getAllMovies);
+router.get('/', movieController.getAllMovies);
 
 // Get a single movie by ID
 router.get('/:id', movieController.getMovieById);
-
+router.get('/name/:movie_name', movieController.getMovieByName);
 // Delete a movie by ID
 router.delete('/:id', movieController.deleteMovie);
 

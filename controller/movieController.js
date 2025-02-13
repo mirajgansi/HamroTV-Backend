@@ -7,7 +7,7 @@ exports.addMovie = async (req, res) => {
     const thumbnailupload = req.file ? req.file.path : null;
 
     const newMovie = await Movie.create({
-      movie_name,
+      movie_name:trim(),
       movie_description,
       youtube_link,
       release_year,
@@ -46,6 +46,46 @@ exports.getMovieById = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+const { Op } = require("sequelize");
+
+exports.getMovieByName = async (req, res) => {
+  try {
+    const movieName = req.params.movie_name.trim();  // Trim spaces from movie name
+    console.log("Searching for movie:", movieName);
+
+    if (!movieName) {
+      return res.status(400).json({ error: "Movie name is required" });
+    }
+
+    // Log the movie name to make sure it's being passed correctly
+    console.log("Movie name after trimming:", movieName);
+
+    // Perform the case-insensitive search using ILIKE
+    const movies = await Movie.findAll({
+      where: {
+        movie_name: {
+          [Op.iLike]: `%${movieName}%`  // Case-insensitive search
+        }
+      },
+      attributes: ["movie_name", "thumbnailupload", "youtube_link"]
+    });
+
+    // Log the found movies to see if they're being retrieved correctly
+    console.log("Movies retrieved from the database:", movies.map(movie => movie.movie_name));
+
+    if (movies.length === 0) {
+      console.log("No movies found with the name:", movieName);
+      return res.status(404).json({ error: "No movies found" });
+    }
+
+    res.status(200).json(movies);
+  } catch (err) {
+    console.error("Error fetching movie:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
 
 // Delete a movie by ID
 exports.deleteMovie = async (req, res) => {
