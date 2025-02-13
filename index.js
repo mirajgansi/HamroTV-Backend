@@ -23,7 +23,7 @@ app.get('/', (req, res) => {
     res.send('Server is running!');
 });
 
-app.get('/login', (req, res) => {
+app.post('/login', (req, res) => {
     res.send("Welcome to the web page");
 });
 

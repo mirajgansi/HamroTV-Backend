@@ -23,7 +23,7 @@ const User = sequelize.define('User', {
             len: [3, 50],
         },
     },
-    password_hash: {
+    password: {
         type: DataTypes.STRING,
         allowNull: false,
         validate: {
@@ -36,7 +36,7 @@ const User = sequelize.define('User', {
 
 User.beforeCreate(async (user) => {
     const bcrypt = require('bcrypt');
-    user.password_hash = await bcrypt.hash(user.password_hash, 10);
+    user.password= await bcrypt.hash(user.password, 10);
 });
 
 module.exports = User;

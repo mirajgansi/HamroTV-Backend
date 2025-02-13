@@ -7,7 +7,7 @@ exports.addMovie = async (req, res) => {
     const thumbnailupload = req.file ? req.file.path : null;
 
     const newMovie = await Movie.create({
-      movie_name:trim(),
+      movie_name,
       movie_description,
       youtube_link,
       release_year,
@@ -68,7 +68,7 @@ exports.getMovieByName = async (req, res) => {
           [Op.iLike]: `%${movieName}%`  // Case-insensitive search
         }
       },
-      attributes: ["movie_name", "thumbnailupload", "youtube_link"]
+      attributes: ["movie_id","movie_name", "thumbnailupload", "youtube_link"]
     });
 
     // Log the found movies to see if they're being retrieved correctly

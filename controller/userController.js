@@ -4,7 +4,7 @@ const bcrypt = require('bcrypt');
 
 const registerUser = async (req, res) => {
     try {
-        const { username, email, password_hash } = req.body;
+        const { username, email, password } = req.body;
 
         // Check if user exists
         const existingUser = await User.findOne({ where: { username } });
@@ -19,13 +19,13 @@ const registerUser = async (req, res) => {
 
         // Hash the password
         const saltRounds = 10;
-        const hashedPassword = await bcrypt.hash(password_hash, saltRounds);
+        const hashedPassword = await bcrypt.hash(password, saltRounds);
 
         // Create new user
         const newUser = await User.create({
             username,
             email,
-            password_hash: hashedPassword
+            password: hashedPassword
         });
 
         res.status(201).json({
@@ -43,8 +43,8 @@ const registerUser = async (req, res) => {
 };
 
 const loginUser = async (req, res) => {
-    const { email, password_hash } = req.body;
-    if (!email || !password_hash) {
+    const { email, password } = req.body;
+    if (!email || !password) {
         return res.status(400).json({ error: "Please provide email and password" });
     }
     try {
@@ -52,7 +52,7 @@ const loginUser = async (req, res) => {
         if (!user) {
             return res.status(401).json({ error: "Invalid credentials" });
         }
-        const isMatch = await bcrypt.compare(password_hash, user.password_hash);
+        const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             return res.status(401).json({ error: "Invalid credentials" });
         }
@@ -60,8 +60,16 @@ const loginUser = async (req, res) => {
             { id: user.id, email: user.email },
             process.env.JWT_SECRET || 'fallback_secret',
             { expiresIn: '24h' }
-        );
-        res.status(200).json({ message: "Successfully logged in", token });
+          );
+          res.status(200).json({ 
+            message: "Successfully logged in", 
+            token,
+            user: {
+              id: user.id,
+              username: user.username,
+              email: user.email
+            }
+          });
     } catch (error) {
         console.error("Login error:", error.message);
         res.status(500).json({ error: "Internal server error" });
@@ -77,7 +85,7 @@ const getUserByUsername = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        // Exclude password_hash from the response
+        // Exclude password from the response
         const userData = {
             id: user.id,
             username: user.username,
@@ -108,7 +116,7 @@ const updateUser = async (req, res) => {
         // Hash the new password if provided
         if (password) {
             const saltRounds = 10;
-            user.password_hash = await bcrypt.hash(password, saltRounds);
+            user.password = await bcrypt.hash(password, saltRounds);
         }
 
         await user.save();
