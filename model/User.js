@@ -30,6 +30,10 @@ const User = sequelize.define('User', {
             len: [8, 100],
         },
     },
+    profilePicture: {
+        type: DataTypes.STRING,
+        field: 'profilepicture' 
+    }
 }, {
     tableName: 'users',
 });

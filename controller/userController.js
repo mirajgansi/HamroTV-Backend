@@ -18,8 +18,9 @@ const registerUser = async (req, res) => {
         }
 
         // Hash the password
-        const saltRounds = 10;
-        const hashedPassword = await bcrypt.hash(password, saltRounds);
+        // const saltRounds = 10;
+        const hashedPassword = await bcrypt.hash(password, 10);
+        // const hashedPassword = await bcrypt.hash(password, saltRounds);
 
         // Create new user
         const newUser = await User.create({
@@ -42,6 +43,7 @@ const registerUser = async (req, res) => {
     }
 };
 
+
 const loginUser = async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) {
@@ -50,11 +52,12 @@ const loginUser = async (req, res) => {
     try {
         const user = await User.findOne({ where: { email } });
         if (!user) {
-            return res.status(401).json({ error: "Invalid credentials" });
+            return res.status(401).json({ error: "email Invalid credentials" });
         }
+       
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
-            return res.status(401).json({ error: "Invalid credentials" });
+            return res.status(401).json({ error: "password Invalid credentials" });
         }
         const token = jwt.sign(
             { id: user.id, email: user.email },
@@ -102,33 +105,48 @@ const getUserByUsername = async (req, res) => {
 
 const updateUser = async (req, res) => {
     const { id } = req.params;
-    const { username, email, password } = req.body;
+    const { username, email, password, profilepictureUrl } = req.body;
 
     try {
+        // Find the user by primary key (id)
         const user = await User.findByPk(id);
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
 
+        // Update the user's details
         user.username = username || user.username;
         user.email = email || user.email;
 
-        // Hash the new password if provided
+        // If a password is provided, hash it and update the user's password
         if (password) {
             const saltRounds = 10;
             user.password = await bcrypt.hash(password, saltRounds);
         }
 
+        // Update profile picture URL if provided
+        if (profilepictureUrl) {
+            user.profilePicture = profilepictureUrl;
+        } else {
+            user.profilePicture = null;  // Set profile picture to null if no URL is provided
+        }
+
+        // Save the updated user
         await user.save();
+
+        // Respond with the updated user data
         res.json({
             id: user.id,
             username: user.username,
-            email: user.email
+            email: user.email,
+            profilePicture: user.profilePicture  // Return the updated profile picture URL
         });
     } catch (error) {
+        console.error(error);
         res.status(500).json({ message: 'Server error' });
     }
 };
+
 
 const deleteUser = async (req, res) => {
     try {
