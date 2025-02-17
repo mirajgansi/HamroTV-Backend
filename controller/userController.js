@@ -3,81 +3,81 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 
 const registerUser = async (req, res) => {
+    const { username, email, password } = req.body;
+
+    if (!username || !email || !password) {
+        return res.status(400).json({ error: "Please provide username, email, and password" });
+    }
+
     try {
-        const { username, email, password } = req.body;
-
-        // Check if user exists
-        const existingUser = await User.findOne({ where: { username } });
+        const existingUser = await User.findOne({ where: { email } });
         if (existingUser) {
-            return res.status(400).json({ error: 'Username already exists' });
+            return res.status(400).json({ error: "User already exists" });
         }
 
-        const existingEmail = await User.findOne({ where: { email } });
-        if (existingEmail) {
-            return res.status(400).json({ error: 'Email already exists' });
-        }
+        // ❌ Don't hash the password here! beforeCreate will handle it.
+        const newUser = await User.create({ username, email, password });
 
-        // Hash the password
-        // const saltRounds = 10;
-        const hashedPassword = await bcrypt.hash(password, 10);
-        // const hashedPassword = await bcrypt.hash(password, saltRounds);
+        res.status(201).json({ message: "Registration successful" });
 
-        // Create new user
-        const newUser = await User.create({
-            username,
-            email,
-            password: hashedPassword
-        });
-
-        res.status(201).json({
-            status: 'User created successfully',
-            data: {
-                id: newUser.id,
-                username: newUser.username,
-                email: newUser.email
-            }
-        });
     } catch (error) {
-        console.log(error);
-        res.status(500).json({ error: 'Failed to create user', details: error.message });
+        console.error(error);
+        res.status(500).json({ error: "Something went wrong" });
     }
 };
-
 
 const loginUser = async (req, res) => {
     const { email, password } = req.body;
+
     if (!email || !password) {
         return res.status(400).json({ error: "Please provide email and password" });
     }
+
     try {
+        // Find user by email
         const user = await User.findOne({ where: { email } });
+
         if (!user) {
-            return res.status(401).json({ error: "email Invalid credentials" });
+            return res.status(400).json({ error: "User not found" });
         }
-       
+
+        if (!user.password) {
+            return res.status(500).json({ error: "User password is missing in database" });
+        }
+
+        // Debugging logs
+        console.log("Request Body:", req.body);
+        console.log("Entered Password:", password);
+        console.log("Stored Password:", user.password);
+
+        // Ensure password is a valid string
+        if (typeof password !== "string") {
+            return res.status(400).json({ error: "Invalid password input" });
+        }
+
+        // Compare passwords
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
-            return res.status(401).json({ error: "password Invalid credentials" });
+            return res.status(400).json({ error: "Incorrect password" });
         }
+
+        // Generate JWT token
         const token = jwt.sign(
-            { id: user.id, email: user.email },
-            process.env.JWT_SECRET || 'fallback_secret',
-            { expiresIn: '24h' }
-          );
-          res.status(200).json({ 
-            message: "Successfully logged in", 
-            token,
-            user: {
-              id: user.id,
-              username: user.username,
-              email: user.email
-            }
-          });
+            { userId: user.id, email: user.email },
+            'your_secret_key',
+            { expiresIn: '1h' }
+        );
+
+        // Return token in response
+        return res.status(200).json({ message: "Login successful", token });
+
     } catch (error) {
-        console.error("Login error:", error.message);
-        res.status(500).json({ error: "Internal server error" });
+        console.error(error);
+        return res.status(500).json({ error: "Something went wrong" });
     }
 };
+
+
 
 const getUserByUsername = async (req, res) => {
     try {
@@ -105,7 +105,7 @@ const getUserByUsername = async (req, res) => {
 
 const updateUser = async (req, res) => {
     const { id } = req.params;
-    const { username, email, password, profilepictureUrl } = req.body;
+    const { username, email, password, profilepicture } = req.body;
 
     try {
         // Find the user by primary key (id)
@@ -125,8 +125,8 @@ const updateUser = async (req, res) => {
         }
 
         // Update profile picture URL if provided
-        if (profilepictureUrl) {
-            user.profilePicture = profilepictureUrl;
+        if (profilepicture) {
+            user.profilePicture = profilepicture;
         } else {
             user.profilePicture = null;  // Set profile picture to null if no URL is provided
         }
