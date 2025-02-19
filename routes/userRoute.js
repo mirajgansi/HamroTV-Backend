@@ -8,9 +8,9 @@ router.post('/register', userController.registerUser);
 router.post('/login', userController.loginUser);
 
 // Protected routes (require valid JWT)
-router.get('/:username',  userController.getUserByUsername);
+router.get('/email/:email',userController.getUserByEmail);
 
-router.put('/:id/update', upload.single('profilepicture'),userController.updateUser);
+router.put('/:id/update', upload.single('profilePicture'), userController.updateUser);
 
 router.delete('/:id',  userController.deleteUser);
 

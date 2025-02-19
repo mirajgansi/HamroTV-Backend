@@ -100,6 +100,22 @@ app.get('/movies/name/:movie_name', async (req, res) => {
 });
 
 
+app.get('/email/:email', async (req, res) => {
+  const email = req.params.email;
+  try {
+    const userData = await getUserDataByEmail(email); // Replace with your DB query function
+    if (userData) {
+      res.json(userData); // Return the user data
+    } else {
+      res.status(404).send('User not found');
+    }
+  } catch (error) {
+    console.error('Error fetching user data:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+
 
 app.use('/users', userRoute);
 app.use('/movies', movieRoute);  

@@ -78,17 +78,15 @@ const loginUser = async (req, res) => {
 };
 
 
-
-const getUserByUsername = async (req, res) => {
+const getUserByEmail = async (req, res) => {
     try {
-        const username = req.params.username;
-        const user = await User.findOne({ where: { username } });
+        const email = req.params.email;
+        const user = await User.findOne({ where: { email } });
 
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        // Exclude password from the response
         const userData = {
             id: user.id,
             username: user.username,
@@ -161,4 +159,4 @@ const deleteUser = async (req, res) => {
     }
 };
 
-module.exports = { registerUser, loginUser, getUserByUsername, updateUser, deleteUser };
+module.exports = { registerUser, loginUser, getUserByEmail, updateUser, deleteUser };
