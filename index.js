@@ -5,6 +5,7 @@ const { sequelize, testConnection } = require('./database/db');
 const userRoute = require('./routes/userRoute');
 const movieRoute = require('./routes/movieRoute');
 const path = require('path');
+const User = require('./model/User');
 const Movie = require('./model/movie'); 
 
 // Middleware
@@ -58,47 +59,86 @@ app.post('/register', async (req, res) => {
 });
 
 
+app.put('/users/:email/update', upload.single('profilepicture'), async (req, res) => {
+  console.log('Uploaded file:', req.file);
 
+  const { email } = req.params;
 
-app.put('/:id/update',
-    upload.single('profilepicture'), // Single file with exact field name
-    (req, res) => {
-      if (!req.file) return res.status(400).send('No file uploaded');
-      res.json({
-        message: 'File uploaded!',
-        path: req.file.path
-      });
+  try {
+    const user = await User.findOne({ where: { email } });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
     }
-  );
 
-
- 
-// Server-side route for fetching movie details
-app.get('/movies/name/:movie_name', async (req, res) => {
-    try {
-        const movieName = req.params.movie_name.trim();
-        console.log(`Searching for movie: ${movieName}`);
-
-        // Fix: Use correct column name `movie_name`
-        const movieData = await Movie.findOne({ where: { movie_name: movieName } });
-
-        if (!movieData) {
-            console.log("Movie not found");
-            return res.status(404).json({ error: "Movie not found" });
-        }
-
-        res.json({
-            id:movieData.movie_id, 
-            name: movieData.movie_name,  
-            youtube_link: movieData.youtube_link,
-            thumbnailupload: movieData.thumbnailupload
-        });
-    } catch (error) {
-        console.error("Database Query Error:", error);
-        res.status(500).json({ error: "Internal Server Error" });
+    if (req.body.username) {
+      user.username = req.body.username;
     }
+
+    if (req.body.email) {
+      user.email = req.body.email;
+    }
+
+    if (req.file) {
+      user.profilePicture = req.file.path;
+    }
+
+    await user.save();
+
+    res.json({ message: 'User updated successfully' });
+  } catch (error) {
+    console.error('Error updating user:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
 });
 
+
+const bcrypt = require('bcrypt'); // Add this if not already included
+
+app.put('/users/:email/update', upload.single('profilepicture'), async (req, res) => {
+  console.log('Uploaded file:', req.file);
+  console.log('Request body:', req.body);
+
+  const { email } = req.params;
+  const { username, currentPassword, newPassword } = req.body;
+
+  try {
+    const user = await User.findOne({ where: { email } });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Update username
+    if (username) {
+      user.username = username;
+    }
+
+    // Update password
+    if (currentPassword && newPassword) {
+      const isMatch = await bcrypt.compare(currentPassword, user.password);
+      if (!isMatch) {
+        return res.status(400).json({ message: 'Current password is incorrect' });
+      }
+      user.password = await bcrypt.hash(newPassword, 10); // Hash new password
+    }
+
+    // Update profile picture
+    if (req.file) {
+      user.profilePicture = req.file.filename; // Use filename instead of path for simplicity
+    }
+
+    await user.save();
+
+    // Return updated user data
+    res.json({
+      username: user.username,
+      email: user.email,
+      profilepicture: user.profilePicture,
+    });
+  } catch (error) {
+    console.error('Error updating user:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
 
 app.get('/email/:email', async (req, res) => {
   const email = req.params.email;

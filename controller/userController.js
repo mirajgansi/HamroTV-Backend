@@ -90,6 +90,7 @@ const getUserByEmail = async (req, res) => {
         const userData = {
             id: user.id,
             username: user.username,
+            profilePicture:'uploads/default.jpg',
             email: user.email,
             createdAt: user.createdAt,
             updatedAt: user.updatedAt
@@ -101,50 +102,31 @@ const getUserByEmail = async (req, res) => {
     }
 };
 
-const updateUser = async (req, res) => {
-    const { id } = req.params;
-    const { username, email, password, profilepicture } = req.body;
-
+const updateUserById = async (req, res) => {
     try {
-        // Find the user by primary key (id)
+        const { id } = req.params;
         const user = await User.findByPk(id);
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
-
-        // Update the user's details
-        user.username = username || user.username;
-        user.email = email || user.email;
-
-        // If a password is provided, hash it and update the user's password
+        if (req.file) {
+            user.profilePicture = req.file.path;
+        }
+        const { username, email, password } = req.body;
+        if (username) user.username = username;
+        if (email) user.email = email;
         if (password) {
-            const saltRounds = 10;
-            user.password = await bcrypt.hash(password, saltRounds);
+            const hashedPassword = await bcrypt.hash(password, 10);
+            user.password = hashedPassword;
         }
-
-        // Update profile picture URL if provided
-        if (profilepicture) {
-            user.profilePicture = profilepicture;
-        } else {
-            user.profilePicture = null;  // Set profile picture to null if no URL is provided
-        }
-
-        // Save the updated user
         await user.save();
-
-        // Respond with the updated user data
-        res.json({
-            id: user.id,
-            username: user.username,
-            email: user.email,
-            profilePicture: user.profilePicture  // Return the updated profile picture URL
-        });
+        res.json({ message: 'User updated successfully' });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Server error' });
+        console.error('Error updating user:', error);
+        res.status(500).json({ message: 'Internal server error' });
     }
 };
-
+  
 
 const deleteUser = async (req, res) => {
     try {
@@ -159,4 +141,4 @@ const deleteUser = async (req, res) => {
     }
 };
 
-module.exports = { registerUser, loginUser, getUserByEmail, updateUser, deleteUser };
+module.exports = { registerUser, loginUser, getUserByEmail, updateUserById , deleteUser };
