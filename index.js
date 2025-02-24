@@ -59,41 +59,40 @@ app.post('/register', async (req, res) => {
 });
 
 
-app.put('/users/:email/update', upload.single('profilepicture'), async (req, res) => {
-  console.log('Uploaded file:', req.file);
+// app.put('/users/:email/update', upload.single('profilepicture'), async (req, res) => {
+//   console.log('Uploaded file:', req.file);
 
-  const { email } = req.params;
+//   const { email } = req.params;
 
-  try {
-    const user = await User.findOne({ where: { email } });
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
+//   try {
+//     const user = await User.findOne({ where: { email } });
+//     if (!user) {
+//       return res.status(404).json({ message: 'User not found' });
+//     }
 
-    if (req.body.username) {
-      user.username = req.body.username;
-    }
+//     if (req.body.username) {
+//       user.username = req.body.username;
+//     }
 
-    if (req.body.email) {
-      user.email = req.body.email;
-    }
+//     if (req.body.email) {
+//       user.email = req.body.email;
+//     }
 
-    if (req.file) {
-      user.profilePicture = req.file.path;
-    }
+//     if (req.file) {
+//       user.profilePicture = req.file.path;
+//     }
 
-    await user.save();
+//     await user.save();
 
-    res.json({ message: 'User updated successfully' });
-  } catch (error) {
-    console.error('Error updating user:', error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
+//     res.json({ message: 'User updated successfully' });
+//   } catch (error) {
+//     console.error('Error updating user:', error);
+//     res.status(500).json({ message: 'Internal server error' });
+//   }
+// });
 
 
-const bcrypt = require('bcrypt'); // Add this if not already included
-
+const bcrypt = require('bcrypt'); 
 app.put('/users/:email/update', upload.single('profilepicture'), async (req, res) => {
   console.log('Uploaded file:', req.file);
   console.log('Request body:', req.body);
@@ -123,7 +122,8 @@ app.put('/users/:email/update', upload.single('profilepicture'), async (req, res
 
     // Update profile picture
     if (req.file) {
-      user.profilePicture = req.file.filename; // Use filename instead of path for simplicity
+      // Replace backslashes with forward slashes for compatibility in URLs
+      user.profilePicture = req.file.path.replace('\\', '/');
     }
 
     await user.save();
@@ -140,6 +140,7 @@ app.put('/users/:email/update', upload.single('profilepicture'), async (req, res
   }
 });
 
+
 app.get('/email/:email', async (req, res) => {
   const email = req.params.email;
   try {
@@ -154,6 +155,8 @@ app.get('/email/:email', async (req, res) => {
     res.status(500).send('Internal Server Error');
   }
 });
+
+
 
 
 

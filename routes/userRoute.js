@@ -12,6 +12,6 @@ router.get('/email/:email',userController.getUserByEmail);
 
 router.put('/:email/update', upload.single('profilePicture'), userController.updateUserById );
 
-router.delete('/:id',  userController.deleteUser);
+router.delete('/:id',userController.deleteUser);
 
 module.exports = router;

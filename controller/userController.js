@@ -90,7 +90,7 @@ const getUserByEmail = async (req, res) => {
         const userData = {
             id: user.id,
             username: user.username,
-            profilePicture:'uploads/default.jpg',
+            profilePicture: user.profilePicture,
             email: user.email,
             createdAt: user.createdAt,
             updatedAt: user.updatedAt
@@ -104,41 +104,67 @@ const getUserByEmail = async (req, res) => {
 
 const updateUserById = async (req, res) => {
     try {
-        const { id } = req.params;
-        const user = await User.findByPk(id);
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
+        const email = decodeURIComponent(req.params.email);
+        console.log("Updating profile picture for email:", email);
+        console.log("File Uploaded:", req.file);
+    
+        if (!req.file) {
+          return res.status(400).json({ message: "No file uploaded" });
         }
-        if (req.file) {
-            user.profilePicture = req.file.path;
+    
+        // Just use whatever filename was provided by the upload middleware
+        // This accepts the hashed filename that's currently being generated
+        const filename = req.file.filename;
+        console.log("New profile picture filename:", filename);
+    
+        const updatedUser = await User.findOne({ where: { email } });
+        if (!updatedUser) {
+          return res.status(404).json({ message: "User not found" });
         }
-        const { username, email, password } = req.body;
-        if (username) user.username = username;
-        if (email) user.email = email;
-        if (password) {
-            const hashedPassword = await bcrypt.hash(password, 10);
-            user.password = hashedPassword;
-        }
-        await user.save();
-        res.json({ message: 'User updated successfully' });
-    } catch (error) {
-        console.error('Error updating user:', error);
-        res.status(500).json({ message: 'Internal server error' });
-    }
+    
+        updatedUser.profilePicture = filename;
+        await updatedUser.save();
+    
+        // Return the full path that should be used to access this image
+        const imagePath = `/uploads/${filename}`;
+        res.json({ 
+            profilePicture: filename,
+            profilePictureUrl: imagePath,
+            message: "Profile picture updated successfully" 
+        });
+      } catch (error) {
+        console.error("Profile picture update error:", error);
+        res.status(500).json({ message: "Update failed" });
+      }
 };
   
 
 const deleteUser = async (req, res) => {
     try {
-        const user = await User.findByPk(req.params.id);
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-        await user.destroy();
-        res.json({ message: 'User deleted successfully' });
+      const userId = req.params.id;
+      const { password } = req.body; // Expect password in request body
+  
+      if (!password) {
+        return res.status(400).json({ error: "Password is required to delete account" });
+      }
+  
+      const user = await User.findByPk(userId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+  
+      // Verify password (assuming it's hashed with bcrypt)
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      if (!isPasswordValid) {
+        return res.status(401).json({ error: "Incorrect password" });
+      }
+  
+      await user.destroy();
+      res.status(200).json({ message: "User deleted successfully" });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+      console.error("Error deleting user:", err);
+      res.status(500).json({ error: err.message });
     }
-};
-
-module.exports = { registerUser, loginUser, getUserByEmail, updateUserById , deleteUser };
+  };
+  
+module.exports = { registerUser, loginUser, getUserByEmail, updateUserById, deleteUser };
